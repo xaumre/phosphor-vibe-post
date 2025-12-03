@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IBM i Terminal - Social Media Post Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .terminal {
+            width: 100%;
+            max-width: 1200px;
+            background-color: #000;
+            border: 3px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .screen {
+            padding: 20px;
+            min-height: 600px;
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: screenFlash 0.1s;
+        }
+
+        @keyframes screenFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .header {
+            color: #00ffff;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .system-info {
+            color: #00ff00;
+        }
+
+        .content {
+            color: #00ff00;
+            line-height: 1.6;
+        }
+
+        .menu-item {
+            color: #00ff00;
+            margin: 8px 0;
+            padding-left: 40px;
+        }
+
+        .menu-number {
+            color: #ffff00;
+            display: inline-block;
+            width: 30px;
+        }
+
+        .input-line {
+            color: #00ff00;
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-field {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            outline: none;
+            width: 200px;
+            border-bottom: 2px solid #00ff00;
+            margin-left: 10px;
+            padding: 2px 5px;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background-color: #00ff00;
+            animation: blink 1s infinite;
+            margin-left: 5px;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        .function-bar {
+            background-color: #0a0a0a;
+            border-top: 2px solid #00ff00;
+            padding: 10px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .function-key {
+            color: #000;
+            background-color: #00ff00;
+            padding: 2px 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .function-key:hover {
+            background-color: #00ffff;
+        }
+
+        .function-key:active {
+            background-color: #ffff00;
+        }
+
+        .function-text {
+            color: #00ffff;
+        }
+
+        .status-bar {
+            background-color: #0a0a0a;
+            border-top: 1px solid #00ff00;
+            padding: 5px 20px;
+            display: flex;
+            justify-content: space-between;
+            color: #00ff00;
+            font-size: 14px;
+        }
+
+        .section-title {
+            color: #00ffff;
+            margin: 20px 0 10px 0;
+            font-weight: bold;
+        }
+
+        .warning {
+            color: #ffff00;
+        }
+
+        .error {
+            color: #ff0000;
+        }
+
+        .success {
+            color: #00ff00;
+        }
+
+        .highlight {
+            color: #ffffff;
+            background-color: #00ff00;
+            padding: 0 4px;
+        }
+
+        .post-preview {
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin: 15px 0;
+            color: #ffffff;
+        }
+
+        .ascii-art {
+            color: #00ffff;
+            line-height: 1.2;
+            font-size: 12px;
+            margin: 15px 0;
+        }
+
+        .loading {
+            color: #ffff00;
+            text-align: center;
+            padding: 40px;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .dots::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        button {
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            margin: 5px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background-color: #00ff00;
+            color: #000;
+        }
+
+        textarea {
+            background: #0a0a0a;
+            border: 2px solid #00ff00;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            width: 100%;
+            resize: vertical;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal">
+        <!-- Login Screen -->
+        <div class="screen active" id="screen-login">
+            <div class="header">
+                <div class="title">SOCIAL MEDIA POST GENERATOR</div>
+                <div class="system-info">System:</div>
+            </div>
+            
+            <div class="content">
+                <p>╔════════════════════════════════════════════════════════════════════════════╗</p>
+                <p>║                         WELCOME TO VIBE POST                               ║</p>
+                <p>║                    Vintage Social Media Generator                          ║</p>
+                <p>╚════════════════════════════════════════════════════════════════════════════╝</p>
+                
+                <div style="margin-top: 40px;">
+                    <p>Please sign in to continue:</p>
+                    <br>
+                    <div style="padding-left: 40px;">
+                        <p>Email address: <input type="email" class="input-field" id="email" placeholder="user@example.com"></p>
+                        <br>
+                        <p>Password     : <input type="password" class="input-field" id="password" placeholder="********"></p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 40px; padding-left: 40px;">
+                    <p class="menu-item"><span class="menu-number">1.</span> Sign in</p>
+                    <p class="menu-item"><span class="menu-number">2.</span> Create new account</p>
+                    <p class="menu-item"><span class="menu-number">90.</span> Exit</p>
+                </div>
+
+                <div class="input-line">
+                    Selection ===> <input type="text" class="input-field" id="login-selection" maxlength="2" style="width: 50px;">
+                    <span class="cursor"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Menu Screen -->
+        <div class="screen" id="screen-main">
+            <div class="header">
+                <div class="title">MAIN MENU</div>
+                <div class="system-info">System: VIBE-POST</div>
+            </div>
+            
+            <div class="content">
+                <p>User: <span class="highlight">user@example.com</span></p>
+                <br>
+                <p>Select one of the following:</p>
+                <br>
+                <div style="padding-left: 40px;">
+                    <p class="menu-item"><span class="menu-number">1.</span> Create new post</p>
+                    <p class="menu-item"><span class="menu-number">2.</span> View saved posts</p>
+                    <p class="menu-item"><span class="menu-number">3.</span> Account settings</p>
+                    <br>
+                    <p class="menu-item"><span class="menu-number">90.</span> Sign off</p>
+                </div>
+
+                <div class="input-line">
+                    Selection or command ===> <input type="text" class="input-field" id="main-selection" maxlength="2" style="width: 50px;">
+                    <span class="cursor"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Selection Screen -->
+        <div class="screen" id="screen-platform">
+            <div class="header">
+                <div class="title">SELECT PLATFORM</div>
+                <div class="system-info">System: VIBE-POST</div>
+            </div>
+            
+            <div class="content">
+                <p>Select target social media platform:</p>
+                <br>
+                <div style="padding-left: 40px;">
+                    <p class="menu-item"><span class="menu-number">1.</span> Facebook <span class="warning">(Max 63,206 characters)</span></p>
+                    <p class="menu-item"><span class="menu-number">2.</span> Instagram <span class="warning">(Max 2,200 characters)</span></p>
+                    <p class="menu-item"><span class="menu-number">3.</span> X (Twitter) <span class="warning">(Max 280 characters)</span></p>
+                    <p class="menu-item"><span class="menu-number">4.</span> LinkedIn <span class="warning">(Max 3,000 characters)</span></p>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <p class="section-title">PLATFORM CHARACTERISTICS:</p>
+                    <p style="padding-left: 40px; color: #00ffff;">
+                        1=Casual/Personal  2=Visual/Trendy  3=Concise/Viral  4=Professional
+                    </p>
+                </div>
+
+                <div class="input-line">
+                    Selection ===> <input type="text" class="input-field" id="platform-selection" maxlength="1" style="width: 50px;">
+                    <span class="cursor"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Topic Method Selection Screen -->
+        <div class="screen" id="screen-topic-method">
+            <div class="header">
+                <div class="title">TOPIC SELECTION</div>
+                <div class="system-info">System: VIBE-POST</div>
+            </div>
+            
+            <div class="content">
+                <p>Platform: <span class="highlight">X (Twitter)</span></p>
+                <br>
+                <p>How would you like to choose your post topic?</p>
+                <br>
+                <div style="padding-left: 40px;">
+                    <p class="menu-item"><span class="menu-number">1.</span> Write your own topic</p>
+                    <p class="menu-item"><span class="menu-number">2.</span> Browse trending suggestions</p>
+                    <p class="menu-item"><span class="menu-number">3.</span> Get inspired by famous quotes</p>
+                </div>
+
+                <div class="input-line">
+                    Selection ===> <input type="text" class="input-field" id="topic-method-selection" maxlength="1" style="width: 50px;">
+                    <span class="cursor"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Topic Input Screen -->
+        <div class="screen" id="screen-custom-topic">
+            <div class="header">
+                <div class="title">ENTER TOPIC</div>
+                <div class="system-info">System: VIBE-POST</div>
+            </div>
+            
+            <div class="content">
+                <p>Platform: <span class="highlight">X (Twitter)</span></p>
+                <p>Max length: <span class="warning">280 characters</span></p>
+                <br>
+                <p>Enter your post topic or idea:</p>
+                <br>
+                <textarea id="custom-topic" rows="5" placeholder="Type your topic here..."></textarea>
+                
+                <div style="margin-top: 20px; padding-left: 40px;">
+                    <p class="menu-item"><span class="menu-number">1.</span> Generate post</p>
+                    <p class="menu-item"><span class="menu-number">2.</span> Clear and start over</p>
+                </div>
+
+                <div class="input-line">
+                    Selection ===> <input type="text" class="input-field" id="custom-topic-selection" maxlength="1" style="width: 50px;">
+                    <span class="cursor"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generation Progress Screen -->
+        <div class="screen" id="screen-generating">
+            <div class="header">
+                <div class="title">GENERATING POST</div>
+                <div class="system-info">System: VIBE-POST</div>
+            </div>
+            
+            <div class="content">
+                <div class="loading">
+                    <p style="font-size: 20px;">╔═══════════════════════════════════════╗</p>
+                    <p style="font-size: 20px;">║                                       ║</p>
+                    <p style="font-size: 20px;">║         PROCESSING REQUEST            ║</p>
+                    <p style="font-size: 20px;">║                                       ║</p>
+                    <p style="font-size: 20px;">╚═══════════════════════════════════════╝</p>
+                    <br>
+                    <p class="dots">Generating content</p>
+                    <br>
+                    <p style="color: #00ff00; font-size: 12px;">▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░ 50%</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Post Preview Screen -->
+        <div class="screen" id="screen-preview">
+            <div class="header">
+                <div class="title">POST PREVIEW</div>
+                <div class="system-info">System: VIBE-POST</div>
+            </div>
+            
+            <div class="content">
+                <p>Platform: <span class="highlight">X (Twitter)</span></p>
+                <p>Characters: <span class="success">247/280</span></p>
+                <br>
+                
+                <p class="section-title">POST CONTENT:</p>
+                <div class="post-preview">
+The future of technology isn't about replacing humans—it's about augmenting human potential. AI tools empower us to focus on creativity, strategy, and meaningful connections. Let's build together! 🚀
+
+#AI #TechForGood #Innovation #FutureOfWork
+                </div>
+
+                <p class="section-title">GENERATED IMAGE:</p>
+                <div class="ascii-art">
+    ╔═══════════════════════════════════════╗
+    ║  ██████╗  ██████╗ ██╗   ██╗████████╗ ║
+    ║  ██╔══██╗██╔═══██╗██║   ██║╚══██╔══╝ ║
+    ║  ██████╔╝██║   ██║██║   ██║   ██║    ║
+    ║  ██╔═══╝ ██║   ██║██║   ██║   ██║    ║
+    ║  ██║     ╚██████╔╝╚██████╔╝   ██║    ║
+    ║  ╚═╝      ╚═════╝  ╚═════╝    ╚═╝    ║
+    ╚═══════════════════════════════════════╝
+                </div>
+
+                <div style="margin-top: 20px; padding-left: 40px;">
+                    <p class="menu-item"><span class="menu-number">1.</span> Regenerate post</p>
+                    <p class="menu-item"><span class="menu-number">2.</span> Edit post</p>
+                    <p class="menu-item"><span class="menu-number">3.</span> Accept and continue</p>
+                </div>
+
+                <div class="input-line">
+                    Selection ===> <input type="text" class="input-field" id="preview-selection" maxlength="1" style="width: 50px;">
+                    <span class="cursor"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Screen -->
+        <div class="screen" id="screen-download">
+            <div class="header">
+                <div class="title">POST READY</div>
+                <div class="system-info">System: VIBE-POST</div>
+            </div>
+            
+            <div class="content">
+                <p class="success" style="text-align: center; font-size: 18px; margin: 20px 0;">
+                    ✓ POST GENERATED SUCCESSFULLY
+                </p>
+                <br>
+                
+                <p>Your post is ready to share!</p>
+                <br>
+
+                <div style="padding-left: 40px;">
+                    <p class="menu-item"><span class="menu-number">1.</span> Copy post text to clipboard</p>
+                    <p class="menu-item"><span class="menu-number">2.</span> Download ASCII art image</p>
+                    <p class="menu-item"><span class="menu-number">3.</span> Save to my account</p>
+                    <p class="menu-item"><span class="menu-number">4.</span> Create another post</p>
+                    <br>
+                    <p class="menu-item"><span class="menu-number">90.</span> Return to main menu</p>
+                </div>
+
+                <div class="input-line">
+                    Selection ===> <input type="text" class="input-field" id="download-selection" maxlength="2" style="width: 50px;">
+                    <span class="cursor"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Function Key Bar -->
+        <div class="function-bar">
+            <div>
+                <button class="function-key" onclick="goBack()">F3</button>
+                <span class="function-text">=Exit</span>
+            </div>
+            <div>
+                <button class="function-key">F4</button>
+                <span class="function-text">=Prompt</span>
+            </div>
+            <div>
+                <button class="function-key">F9</button>
+                <span class="function-text">=Retrieve</span>
+            </div>
+            <div>
+                <button class="function-key" onclick="cancel()">F12</button>
+                <span class="function-text">=Cancel</span>
+            </div>
+            <div>
+                <button class="function-key">F13</button>
+                <span class="function-text">=Information Assistant</span>
+            </div>
+            <div style="margin-left: auto;">
+                <button class="function-key">F23</button>
+                <span class="function-text">=Set initial menu</span>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div>(C) VIBE POST 2024</div>
+            <div class="success">ONLINE</div>
+            <div id="screen-indicator">LOGIN</div>
+            <div id="position">1,1</div>
+        </div>
+    </div>
+
+    <script>
+        let currentScreen = 'screen-login';
+        let screenHistory = [];
+
+        // Screen navigation
+        function showScreen(screenId) {
+            screenHistory.push(currentScreen);
+            document.getElementById(currentScreen).classList.remove('active');
+            currentScreen = screenId;
+            document.getElementById(currentScreen).classList.add('active');
+            updateScreenIndicator();
+        }
+
+        function goBack() {
+            if (screenHistory.length > 0) {
+                const previousScreen = screenHistory.pop();
+                document.getElementById(currentScreen).classList.remove('active');
+                currentScreen = previousScreen;
+                document.getElementById(currentScreen).classList.add('active');
+                updateScreenIndicator();
+            }
+        }
+
+        function cancel() {
+            // Go back to main menu
+            screenHistory = [];
+            document.getElementById(currentScreen).classList.remove('active');
+            currentScreen = 'screen-main';
+            document.getElementById(currentScreen).classList.add('active');
+            updateScreenIndicator();
+        }
+
+        function updateScreenIndicator() {
+            const indicator = document.getElementById('screen-indicator');
+            const screenNames = {
+                'screen-login': 'LOGIN',
+                'screen-main': 'MAIN',
+                'screen-platform': 'PLATFORM',
+                'screen-topic-method': 'TOPIC',
+                'screen-custom-topic': 'INPUT',
+                'screen-generating': 'PROCESS',
+                'screen-preview': 'PREVIEW',
+                'screen-download': 'DOWNLOAD'
+            };
+            indicator.textContent = screenNames[currentScreen] || 'SYSTEM';
+        }
+
+        // Handle Enter key for inputs
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const activeInput = document.activeElement;
+                
+                if (activeInput.id === 'login-selection') {
+                    const value = activeInput.value;
+                    if (value === '1') {
+                        showScreen('screen-main');
+                        activeInput.value = '';
+                    }
+                } else if (activeInput.id === 'main-selection') {
+                    const value = activeInput.value;
+                    if (value === '1') {
+                        showScreen('screen-platform');
+                        activeInput.value = '';
+                    }
+                } else if (activeInput.id === 'platform-selection') {
+                    const value = activeInput.value;
+                    if (value >= '1' && value <= '4') {
+                        showScreen('screen-topic-method');
+                        activeInput.value = '';
+                    }
+                } else if (activeInput.id === 'topic-method-selection') {
+                    const value = activeInput.value;
+                    if (value === '1') {
+                        showScreen('screen-custom-topic');
+                        activeInput.value = '';
+                    }
+                } else if (activeInput.id === 'custom-topic-selection') {
+                    const value = activeInput.value;
+                    if (value === '1') {
+                        showScreen('screen-generating');
+                        activeInput.value = '';
+                        setTimeout(() => {
+                            showScreen('screen-preview');
+                        }, 2000);
+                    }
+                } else if (activeInput.id === 'preview-selection') {
+                    const value = activeInput.value;
+                    if (value === '3') {
+                        showScreen('screen-download');
+                        activeInput.value = '';
+                    }
+                }
+            }
+        });
+
+        // Auto-focus first input on screen change
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.addEventListener('transitionend', function() {
+                if (this.classList.contains('active')) {
+                    const firstInput = this.querySelector('input[type="text"]:not([type="email"]):not([type="password"])');
+                    if (firstInput) {
+                        firstInput.focus();
+                    }
+                }
+            });
+        });
+
+        // Focus first input on load
+        window.addEventListener('load', function() {
+            document.getElementById('login-selection').focus();
+        });
+    </script>
+</body>
+</html>

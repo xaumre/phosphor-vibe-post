@@ -592,6 +592,8 @@ document.addEventListener('keydown', (e) => {
       if (focusableElements[nextIndex].select) {
         focusableElements[nextIndex].select();
       }
+      // Update cursor visibility
+      manageCursorVisibility();
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       // Move to previous field
@@ -601,6 +603,8 @@ document.addEventListener('keydown', (e) => {
       if (focusableElements[prevIndex].select) {
         focusableElements[prevIndex].select();
       }
+      // Update cursor visibility
+      manageCursorVisibility();
     }
   }
   
@@ -619,9 +623,11 @@ document.addEventListener('keydown', (e) => {
     if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
       e.preventDefault();
       focusableElements[currentIndex + 1].focus();
+      manageCursorVisibility();
     } else if (currentIndex === focusableElements.length - 1) {
       e.preventDefault();
       focusableElements[0].focus();
+      manageCursorVisibility();
     }
   }
   
@@ -640,9 +646,11 @@ document.addEventListener('keydown', (e) => {
     if (currentIndex > 0) {
       e.preventDefault();
       focusableElements[currentIndex - 1].focus();
+      manageCursorVisibility();
     } else if (currentIndex === 0) {
       e.preventDefault();
       focusableElements[focusableElements.length - 1].focus();
+      manageCursorVisibility();
     }
   }
   
@@ -718,67 +726,41 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Custom block cursor effect for input fields
-function setupBlockCursor() {
-  const inputFields = document.querySelectorAll('.input-field[type="text"]');
-  
-  inputFields.forEach(input => {
-    // Create a hidden span to measure text width
-    const measureSpan = document.createElement('span');
-    measureSpan.style.cssText = `
-      position: absolute;
-      visibility: hidden;
-      white-space: pre;
-      font-family: 'Courier New', monospace;
-      font-size: 16px;
-    `;
-    document.body.appendChild(measureSpan);
-    
-    // Find or create cursor element
-    let cursorElement = input.nextElementSibling;
-    if (!cursorElement || !cursorElement.classList.contains('cursor')) {
-      cursorElement = document.createElement('span');
-      cursorElement.className = 'cursor';
-      input.parentNode.insertBefore(cursorElement, input.nextSibling);
-    }
-    
-    // Update cursor position
-    function updateCursorPosition() {
-      const value = input.value.substring(0, input.selectionStart);
-      measureSpan.textContent = value;
-      const textWidth = measureSpan.offsetWidth;
-      
-      // Position cursor relative to input
-      const inputRect = input.getBoundingClientRect();
-      cursorElement.style.position = 'absolute';
-      cursorElement.style.left = `${inputRect.left + textWidth + 10}px`; // 10px for margin-left
-      cursorElement.style.top = `${inputRect.top}px`;
-    }
-    
-    // Update on input and focus
-    input.addEventListener('input', updateCursorPosition);
-    input.addEventListener('focus', () => {
-      cursorElement.style.display = 'inline-block';
-      updateCursorPosition();
-    });
-    input.addEventListener('blur', () => {
-      cursorElement.style.display = 'none';
-    });
-    input.addEventListener('keyup', updateCursorPosition);
-    input.addEventListener('click', updateCursorPosition);
-    
-    // Initial position
-    if (document.activeElement === input) {
-      updateCursorPosition();
-    }
+// Manage cursor visibility based on focus
+function manageCursorVisibility() {
+  // Hide all cursors initially
+  document.querySelectorAll('.cursor').forEach(cursor => {
+    cursor.style.display = 'none';
   });
+  
+  // Show cursor next to focused input
+  const activeElement = document.activeElement;
+  if (activeElement && activeElement.classList.contains('input-field')) {
+    const cursor = activeElement.nextElementSibling;
+    if (cursor && cursor.classList.contains('cursor')) {
+      cursor.style.display = 'inline-block';
+    }
+  }
 }
+
+// Add focus/blur listeners to all input fields
+document.addEventListener('focusin', (e) => {
+  if (e.target.classList.contains('input-field')) {
+    manageCursorVisibility();
+  }
+});
+
+document.addEventListener('focusout', (e) => {
+  if (e.target.classList.contains('input-field')) {
+    manageCursorVisibility();
+  }
+});
 
 // Start app
 init();
 
-// Setup block cursor after page loads
-setTimeout(setupBlockCursor, 100);
+// Initial cursor setup
+setTimeout(manageCursorVisibility, 200);
 
 // Make function key buttons clickable
 document.addEventListener('DOMContentLoaded', () => {
