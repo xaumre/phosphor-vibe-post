@@ -63,13 +63,28 @@ Example format: ["Topic 1", "Topic 2", "Topic 3", "Topic 4", "Topic 5"]`;
       tools: [{ googleSearch: {} }]
     });
     const result = await model.generateContent(prompt);
+    
+    // Check if response is valid
+    if (!result || !result.response) {
+      throw new Error('Invalid response from Gemini API');
+    }
+    
     const response = result.response.text().trim();
     console.log('Gemini response received:', response.substring(0, 100));
     
     // Remove markdown code blocks if present
     const cleanResponse = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     
-    const suggestions = JSON.parse(cleanResponse);
+    // Validate JSON before parsing
+    let suggestions;
+    try {
+      suggestions = JSON.parse(cleanResponse);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError.message);
+      console.error('Response was:', cleanResponse.substring(0, 200));
+      throw new Error('Failed to parse Gemini response as JSON');
+    }
+    
     console.log('Parsed suggestions:', suggestions);
     
     // Validate it's an array with 5 items
@@ -81,7 +96,8 @@ Example format: ["Topic 1", "Topic 2", "Topic 3", "Topic 4", "Topic 5"]`;
     console.log('Invalid suggestions format, using static');
     return getStaticSuggestions(platform);
   } catch (error) {
-    console.error('Suggestions generation error:', error);
+    console.error('Suggestions generation error:', error.message || error);
+    console.error('Error details:', error);
     return getStaticSuggestions(platform);
   }
 }
@@ -146,12 +162,26 @@ Example format: [{"text": "Quote text here", "author": "Author Name"}, ...]`;
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const result = await model.generateContent(prompt);
+    
+    // Check if response is valid
+    if (!result || !result.response) {
+      throw new Error('Invalid response from Gemini API');
+    }
+    
     let response = result.response.text().trim();
     
     // Remove markdown code blocks if present
     response = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     
-    const quotes = JSON.parse(response);
+    // Validate JSON before parsing
+    let quotes;
+    try {
+      quotes = JSON.parse(response);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError.message);
+      console.error('Response was:', response.substring(0, 200));
+      throw new Error('Failed to parse Gemini response as JSON');
+    }
     
     // Validate it's an array with 8 items
     if (Array.isArray(quotes) && quotes.length === 8 && quotes[0].text && quotes[0].author) {
@@ -160,7 +190,8 @@ Example format: [{"text": "Quote text here", "author": "Author Name"}, ...]`;
     
     return getStaticQuotes();
   } catch (error) {
-    console.error('Quotes generation error:', error.message);
+    console.error('Quotes generation error:', error.message || error);
+    console.error('Error details:', error);
     return getStaticQuotes();
   }
 }
@@ -205,6 +236,12 @@ Just return the post text, nothing else.`;
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const result = await model.generateContent(prompt);
+    
+    // Check if response is valid
+    if (!result || !result.response) {
+      throw new Error('Invalid response from Gemini API');
+    }
+    
     let text = result.response.text().trim();
     
     // Ensure within character limit
@@ -214,7 +251,8 @@ Just return the post text, nothing else.`;
     
     return text;
   } catch (error) {
-    console.error('Gemini API error:', error.message);
+    console.error('Gemini API error:', error.message || error);
+    console.error('Error details:', error);
     return generateMockPost(platform, topic, config);
   }
 }
@@ -286,6 +324,12 @@ Return ONLY the ASCII art, no explanations or markdown code blocks.`;
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const result = await model.generateContent(prompt);
+    
+    // Check if response is valid
+    if (!result || !result.response) {
+      throw new Error('Invalid response from Gemini API');
+    }
+    
     let art = result.response.text().trim();
     
     // Remove markdown code blocks if present
@@ -296,7 +340,8 @@ Return ONLY the ASCII art, no explanations or markdown code blocks.`;
     
     return art;
   } catch (error) {
-    console.error('ASCII art generation error:', error.message);
+    console.error('ASCII art generation error:', error.message || error);
+    console.error('Error details:', error);
     return generateSimpleAsciiArt(topic);
   }
 }
