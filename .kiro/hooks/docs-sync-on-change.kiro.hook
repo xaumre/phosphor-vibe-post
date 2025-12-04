@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "name": "Documentation Sync",
+  "description": "Monitors JavaScript source files, configuration files, and HTML files for changes and prompts the agent to update relevant documentation in README.md or other documentation files",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "server/*.js",
+      "public/*.js",
+      "public/*.html",
+      "*.js",
+      "*.json",
+      "docker-compose.yml",
+      "tailwind.config.js"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A source file has been modified. Please review the changes and update the relevant documentation. Check if README.md, DATABASE_SETUP.md, EMAIL_VERIFICATION_SETUP.md, or QUICK_START.md need to be updated to reflect these code changes. Consider updating: API endpoints, configuration options, setup instructions, feature descriptions, or architectural patterns that may have changed."
+  }
+}

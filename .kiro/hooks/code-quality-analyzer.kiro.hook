@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "Code Quality Analyzer",
+  "description": "Monitors source code files for changes and provides suggestions for code quality improvements, including identifying code smells, recommending design patterns, and highlighting best practices opportunities. Focuses on readability, maintainability, and performance optimizations.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.css",
+      "**/*.html"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A source code file has been modified. Please analyze the changes in the file for potential improvements:\n\n1. **Code Smells**: Identify any code smells such as duplicated code, long functions, large classes, excessive parameters, or inappropriate naming\n2. **Design Patterns**: Suggest applicable design patterns that could improve the code structure\n3. **Best Practices**: Highlight opportunities to follow language-specific and framework-specific best practices\n4. **Readability**: Recommend improvements for code clarity, naming conventions, and documentation\n5. **Maintainability**: Suggest refactoring opportunities that would make the code easier to maintain and extend\n6. **Performance**: Identify potential performance optimizations without sacrificing readability\n\nConsider the tech stack (Node.js, Express, PostgreSQL, Vanilla JS, Tailwind CSS) and the project's architecture patterns when making suggestions. Ensure all recommendations maintain existing functionality.\n\nProvide actionable, specific suggestions with brief explanations of the benefits."
+  }
+}
