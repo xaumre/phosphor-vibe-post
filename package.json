@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "description": "Social media post generator with vintage terminal UI",
   "main": "server/server.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xaumre/phosphor-vibe-post.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xaumre/phosphor-vibe-post/issues"
+  },
+  "homepage": "https://github.com/xaumre/phosphor-vibe-post#readme",
   "scripts": {
     "start": "node server/server.js",
     "dev": "npm run build:css && node server/server.js",

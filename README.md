@@ -48,7 +48,7 @@ For production builds, the CSS is automatically built and minified.
 ## Deploy to Render
 
 1. Create PostgreSQL database on Render
-2. Create Web Service pointing to this repo
+2. Create Web Service pointing to `https://github.com/xaumre/phosphor-vibe-post`
 3. Add environment variables in Render dashboard:
    - `OPENAI_API_KEY`
    - `JWT_SECRET`
