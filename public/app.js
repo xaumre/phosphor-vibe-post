@@ -353,11 +353,20 @@ if (topicSelection) {
 // Load suggestions
 async function loadSuggestions() {
   const list = document.getElementById('suggestions-list');
-  list.innerHTML = '<div style="color: var(--ibm-yellow);">Loading...</div>';
+  list.innerHTML = '<div style="color: #ffff00;">LOADING SUGGESTIONS...</div>';
   
   try {
     const response = await fetch(`/api/suggestions?platform=${state.selectedPlatform}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to load suggestions');
+    }
+    
     const data = await response.json();
+    
+    if (!data.suggestions || !Array.isArray(data.suggestions)) {
+      throw new Error('Invalid suggestions data');
+    }
     
     const suggestions = data.suggestions;
     list.innerHTML = suggestions.map((s, i) => 
@@ -391,18 +400,28 @@ async function loadSuggestions() {
       }
     });
   } catch (error) {
-    list.innerHTML = '<div style="color: var(--ibm-yellow);">Error loading suggestions</div>';
+    console.error('Suggestions error:', error);
+    list.innerHTML = '<div style="color: var(--ibm-red);">Error loading suggestions. Please try again.</div>';
   }
 }
 
 // Load quotes
 async function loadQuotes() {
   const list = document.getElementById('quotes-list');
-  list.innerHTML = '<div style="color: var(--ibm-yellow);">Loading...</div>';
+  list.innerHTML = '<div style="color: #ffff00;">LOADING QUOTES...</div>';
   
   try {
     const response = await fetch('/api/quotes');
+    
+    if (!response.ok) {
+      throw new Error('Failed to load quotes');
+    }
+    
     const data = await response.json();
+    
+    if (!data.quotes || !Array.isArray(data.quotes)) {
+      throw new Error('Invalid quotes data');
+    }
     
     const quotes = data.quotes;
     list.innerHTML = quotes.map((q, i) => 
@@ -436,7 +455,8 @@ async function loadQuotes() {
       }
     });
   } catch (error) {
-    list.innerHTML = '<div style="color: var(--ibm-yellow);">Error loading quotes</div>';
+    console.error('Quotes error:', error);
+    list.innerHTML = '<div style="color: var(--ibm-red);">Error loading quotes. Please try again.</div>';
   }
 }
 
@@ -555,17 +575,54 @@ function copyText() {
 // Download image
 function downloadImage() {
   const ascii = document.getElementById('generated-image').querySelector('pre').textContent;
-  const blob = new Blob([ascii], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'ascii-art.txt';
-  a.click();
-  URL.revokeObjectURL(url);
-  document.getElementById('result-message').textContent = 'ASCII art downloaded!';
-  setTimeout(() => {
-    document.getElementById('result-message').textContent = '';
-  }, 2000);
+  
+  // Create a canvas element
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  // Set font and measure text
+  const fontSize = 14;
+  const fontFamily = "'IBM Plex Mono', 'Courier New', monospace";
+  ctx.font = `${fontSize}px ${fontFamily}`;
+  
+  // Split ASCII art into lines
+  const lines = ascii.split('\n');
+  const lineHeight = fontSize * 1.2;
+  
+  // Calculate canvas dimensions
+  const maxWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
+  const padding = 40;
+  canvas.width = maxWidth + (padding * 2);
+  canvas.height = (lines.length * lineHeight) + (padding * 2);
+  
+  // Set background color (terminal green theme)
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Set text style
+  ctx.font = `${fontSize}px ${fontFamily}`;
+  ctx.fillStyle = '#00ff00';
+  ctx.textBaseline = 'top';
+  
+  // Draw each line of ASCII art
+  lines.forEach((line, index) => {
+    ctx.fillText(line, padding, padding + (index * lineHeight));
+  });
+  
+  // Convert canvas to blob and download
+  canvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ascii-art.png';
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    document.getElementById('result-message').textContent = 'ASCII art image downloaded!';
+    setTimeout(() => {
+      document.getElementById('result-message').textContent = '';
+    }, 2000);
+  }, 'image/png');
 }
 
 // Back buttons - removed as we're using number selection now

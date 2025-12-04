@@ -12,6 +12,7 @@
     "migrate:verification": "node server/migrations/add_email_verification.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@sendgrid/mail": "^8.1.6",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",

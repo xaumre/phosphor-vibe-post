@@ -77,16 +77,26 @@ app.post('/api/auth/resend-verification', async (req, res) => {
 });
 
 // Get topic suggestions
-app.get('/api/suggestions', (req, res) => {
-  const platform = req.query.platform || 'twitter';
-  const suggestions = generator.getSuggestions(platform);
-  res.json({ suggestions });
+app.get('/api/suggestions', async (req, res) => {
+  try {
+    const platform = req.query.platform || 'twitter';
+    const suggestions = await generator.getSuggestions(platform);
+    res.json({ suggestions });
+  } catch (error) {
+    console.error('Suggestions error:', error);
+    res.status(500).json({ error: 'Failed to get suggestions' });
+  }
 });
 
 // Get famous quotes
-app.get('/api/quotes', (req, res) => {
-  const quotes = generator.getQuotes();
-  res.json({ quotes });
+app.get('/api/quotes', async (req, res) => {
+  try {
+    const quotes = await generator.getQuotes();
+    res.json({ quotes });
+  } catch (error) {
+    console.error('Quotes error:', error);
+    res.status(500).json({ error: 'Failed to get quotes' });
+  }
 });
 
 // Generate post (requires verified email)
@@ -98,8 +108,11 @@ app.post('/api/generate', auth.authMiddleware, auth.requireVerifiedEmail, async 
   }
   
   try {
-    const text = await generator.generatePost(platform, topic);
-    const asciiArt = generator.generateAsciiArt(topic);
+    // Generate both post text and ASCII art in parallel
+    const [text, asciiArt] = await Promise.all([
+      generator.generatePost(platform, topic),
+      generator.generateAsciiArt(topic)
+    ]);
     
     res.json({
       text,
