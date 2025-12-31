@@ -14,7 +14,25 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Import modules
 const generator = require('./generator');
 const auth = require('./auth');
-const { initDatabase, generateBackup } = require('./db');
+const { initDatabase, generateBackup, restoreFromSQL } = require('./db');
+const multer = require('multer');
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/sql' || 
+        file.mimetype === 'text/plain' || 
+        file.originalname.endsWith('.sql')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only SQL files are allowed'));
+    }
+  }
+});
 
 // Health check for Render
 app.get('/health', (req, res) => {
@@ -135,6 +153,166 @@ app.get('/api/admin/backup', async (req, res) => {
     console.error('❌ Backup endpoint error:', error);
     res.status(500).json({ error: 'Backup generation failed' });
   }
+});
+
+// Admin restore endpoint
+app.post('/api/admin/restore', upload.single('sqlFile'), async (req, res) => {
+  try {
+    // Simple token-based authentication
+    const token = req.body.token || req.headers['x-backup-token'];
+    const expectedToken = process.env.ADMIN_BACKUP_TOKEN || 'backup-token-change-me';
+    
+    if (!token || token !== expectedToken) {
+      return res.status(401).json({ error: 'Invalid backup token' });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No SQL file uploaded' });
+    }
+    
+    console.log('🔄 Admin restore requested');
+    console.log(`📁 File: ${req.file.originalname} (${req.file.size} bytes)`);
+    
+    // Convert buffer to string
+    const sqlContent = req.file.buffer.toString('utf8');
+    
+    if (!sqlContent.trim()) {
+      return res.status(400).json({ error: 'SQL file is empty' });
+    }
+    
+    // Restore from SQL
+    const result = await restoreFromSQL(sqlContent);
+    
+    console.log(`✅ Restore completed: ${result.usersRestored} users, ${result.postsRestored} posts`);
+    
+    res.json({
+      success: true,
+      message: 'Database restored successfully',
+      stats: {
+        usersRestored: result.usersRestored,
+        postsRestored: result.postsRestored,
+        statementsProcessed: result.statementsProcessed
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Restore endpoint error:', error);
+    res.status(500).json({ 
+      error: 'Database restore failed',
+      details: error.message 
+    });
+  }
+});
+
+// Admin restore form (simple HTML interface)
+app.get('/admin/restore', (req, res) => {
+  const token = req.query.token;
+  const expectedToken = process.env.ADMIN_BACKUP_TOKEN || 'backup-token-change-me';
+  
+  if (!token || token !== expectedToken) {
+    return res.status(401).send('<h1>Invalid Token</h1><p>Access denied.</p>');
+  }
+  
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Database Restore - Phosphor Vibe Post</title>
+      <style>
+        body { 
+          font-family: 'Courier New', monospace; 
+          background: #000; 
+          color: #0f0; 
+          padding: 20px; 
+          max-width: 600px; 
+          margin: 0 auto; 
+        }
+        .container { 
+          border: 2px solid #0f0; 
+          padding: 20px; 
+          border-radius: 8px; 
+        }
+        input[type="file"] { 
+          background: #000; 
+          color: #0f0; 
+          border: 1px solid #0f0; 
+          padding: 10px; 
+          width: 100%; 
+          margin: 10px 0; 
+        }
+        button { 
+          background: #0f0; 
+          color: #000; 
+          border: none; 
+          padding: 12px 24px; 
+          cursor: pointer; 
+          font-weight: bold; 
+          border-radius: 4px; 
+        }
+        button:hover { background: #0a0; }
+        .status { 
+          margin-top: 20px; 
+          padding: 10px; 
+          border: 1px solid #0f0; 
+          display: none; 
+        }
+        .success { border-color: #0f0; color: #0f0; }
+        .error { border-color: #f00; color: #f00; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>🔄 Database Restore</h1>
+        <p>Upload your SQL backup file to restore your database.</p>
+        
+        <form id="restoreForm" enctype="multipart/form-data">
+          <input type="hidden" name="token" value="${token}">
+          <input type="file" name="sqlFile" accept=".sql" required>
+          <button type="submit">Restore Database</button>
+        </form>
+        
+        <div id="status" class="status"></div>
+      </div>
+      
+      <script>
+        document.getElementById('restoreForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          
+          const formData = new FormData(e.target);
+          const statusDiv = document.getElementById('status');
+          
+          statusDiv.style.display = 'block';
+          statusDiv.className = 'status';
+          statusDiv.innerHTML = '🔄 Restoring database...';
+          
+          try {
+            const response = await fetch('/api/admin/restore', {
+              method: 'POST',
+              body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+              statusDiv.className = 'status success';
+              statusDiv.innerHTML = \`
+                ✅ <strong>Restore Successful!</strong><br>
+                👥 Users restored: \${result.stats.usersRestored}<br>
+                📝 Posts restored: \${result.stats.postsRestored}<br>
+                📊 Statements processed: \${result.stats.statementsProcessed}
+              \`;
+            } else {
+              throw new Error(result.error || 'Restore failed');
+            }
+          } catch (error) {
+            statusDiv.className = 'status error';
+            statusDiv.innerHTML = \`❌ <strong>Restore Failed:</strong> \${error.message}\`;
+          }
+        });
+      </script>
+    </body>
+    </html>
+  `);
 });
 
 // Get topic suggestions

@@ -195,8 +195,67 @@ async function generateBackup() {
   }
 }
 
+// Restore database from SQL content
+async function restoreFromSQL(sqlContent) {
+  const client = await pool.connect();
+  try {
+    console.log('🔄 Starting SQL restore...');
+    
+    // Split SQL content into individual statements
+    const statements = sqlContent
+      .split('\n')
+      .filter(line => line.trim() && !line.trim().startsWith('--'))
+      .join('\n')
+      .split(';')
+      .filter(stmt => stmt.trim());
+    
+    let usersRestored = 0;
+    let postsRestored = 0;
+    
+    for (const statement of statements) {
+      const trimmedStmt = statement.trim();
+      if (!trimmedStmt) continue;
+      
+      try {
+        // Execute the statement
+        const result = await client.query(trimmedStmt);
+        
+        // Count restored records
+        if (trimmedStmt.toLowerCase().includes('insert into users')) {
+          usersRestored += result.rowCount || 0;
+        } else if (trimmedStmt.toLowerCase().includes('insert into posts')) {
+          postsRestored += result.rowCount || 0;
+        }
+        
+        console.log(`✅ Executed: ${trimmedStmt.substring(0, 50)}...`);
+        
+      } catch (error) {
+        // Log but don't fail on individual statement errors
+        console.warn(`⚠️  Statement failed: ${error.message}`);
+        console.warn(`Statement: ${trimmedStmt.substring(0, 100)}...`);
+      }
+    }
+    
+    console.log(`✅ Restore completed: ${usersRestored} users, ${postsRestored} posts`);
+    
+    return {
+      success: true,
+      usersRestored,
+      postsRestored,
+      statementsProcessed: statements.length
+    };
+    
+  } catch (error) {
+    console.error('❌ SQL restore failed:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   pool,
   initDatabase,
-  generateBackup
+  generateBackup,
+  restoreFromSQL
 };

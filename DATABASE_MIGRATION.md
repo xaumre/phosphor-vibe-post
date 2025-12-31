@@ -81,11 +81,12 @@ This will:
 - Interactive prompts for safety
 - Handles error cases gracefully
 
-### `generateBackup()` in `server/db.js`
-- Programmatic SQL backup generation from within the application
-- Creates complete SQL dump with table creation, data insertion, and sequence resets
-- Returns backup SQL and statistics (user count, post count, file size)
-- Used internally by migration tools and available for custom backup workflows
+### `generateBackup()` and `restoreFromSQL()` in `server/db.js`
+- **generateBackup()**: Programmatic SQL backup generation from within the application
+- **restoreFromSQL(sqlContent)**: Programmatic SQL restore from content string
+- Both functions create complete SQL operations with table creation, data insertion, and sequence resets
+- Return detailed statistics (user count, post count, file size, restoration results)
+- Used internally by migration tools and available for custom backup/restore workflows
 
 ## Troubleshooting
 

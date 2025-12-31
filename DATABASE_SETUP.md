@@ -144,8 +144,12 @@ This interactive tool will:
 3. **Restore** the backup to the new database
 4. **Verify** the migration was successful
 
-### Programmatic Backup
-The application also includes an internal backup function (`generateBackup()` in `server/db.js`) that creates SQL backups programmatically. This is used by the migration tools and can be integrated into custom backup workflows.
+### Programmatic Backup & Restore
+The application includes internal backup and restore functions in `server/db.js`:
+- `generateBackup()` - Creates SQL backups programmatically with statistics
+- `restoreFromSQL(sqlContent)` - Restores database from SQL content programmatically
+
+These functions are used by the migration tools and can be integrated into custom backup/restore workflows.
 
 ### Manual Migration Steps
 If you prefer to run each step individually:
