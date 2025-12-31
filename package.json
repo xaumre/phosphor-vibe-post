@@ -17,7 +17,11 @@
     "build": "npm run build:css && npm run migrate",
     "build:css": "node_modules/.bin/tailwindcss -i ./public/input.css -o ./public/styles.css --minify",
     "migrate": "node server/migrate.js",
-    "migrate:verification": "node server/migrations/add_email_verification.js"
+    "migrate:verification": "node server/migrations/add_email_verification.js",
+    "migrate:password-reset": "node server/migrations/add_password_reset.js",
+    "db:backup": "node backup-database.js",
+    "db:restore": "node restore-database.js",
+    "db:migrate-complete": "node migrate-database.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

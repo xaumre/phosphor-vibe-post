@@ -39,6 +39,7 @@ npm run build:css        # Compile and minify Tailwind CSS
 ```bash
 npm run migrate          # Run main database migrations
 npm run migrate:verification  # Run email verification migration
+npm run migrate:password-reset  # Run password reset migration
 ```
 
 ### Docker (Local PostgreSQL)

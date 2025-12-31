@@ -1,3 +1,66 @@
+# Quick Start Guide
+
+## Development Setup (5 minutes)
+
+### 1. Install Dependencies
+```bash
+npm install
+```
+
+### 2. Setup Environment
+```bash
+cp .env.example .env
+```
+
+### 3. Configure Database
+**Option A: Docker (Recommended)**
+```bash
+docker-compose up -d
+npm run migrate
+```
+
+**Option B: Local PostgreSQL**
+See `DATABASE_SETUP.md` for detailed instructions.
+
+### 4. Configure Email (Optional)
+Add to `.env`:
+```bash
+SENDGRID_API_KEY=your-sendgrid-key
+FROM_EMAIL=your-verified-email@example.com
+```
+
+### 5. Configure AI (Optional)
+Add to `.env`:
+```bash
+GEMINI_API_KEY=your-gemini-key
+```
+
+### 6. Start Development
+```bash
+npm run dev
+```
+
+## Available Scripts
+
+- `npm run dev` - Build CSS and start development server
+- `npm start` - Start server only
+- `npm run build` - Build CSS and run migrations
+- `npm run migrate` - Run database migrations
+- `npm run db:migrate-complete` - Complete database migration tool
+- `npm run db:backup` - Backup current database
+- `npm run db:restore` - Restore database from backup
+
+## Database Migration
+
+To migrate from one database to another:
+```bash
+npm run db:migrate-complete
+```
+
+This interactive tool handles the complete migration process.
+
+---
+
 # Email Verification - Quick Start
 
 ## What Was Implemented

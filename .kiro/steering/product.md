@@ -6,7 +6,7 @@
 
 - **AI-Powered Content Generation**: Uses Google Gemini 2.5 Flash to generate posts, trending topics, quotes, and ASCII art
 - **Multi-Platform Support**: Optimized content for Twitter/X, LinkedIn, Facebook, and Instagram with platform-specific tone and character limits
-- **Authentication System**: JWT-based auth with bcrypt password hashing and email verification via SendGrid
+- **Authentication System**: JWT-based auth with bcrypt password hashing, email verification, and password reset via SendGrid
 - **Email Verification**: Required for post generation and saving features
 - **Topic Methods**: Users can write their own topics, get AI-generated trending suggestions, or use famous quotes
 - **ASCII Art Generation**: Vintage terminal-style decorative art for each post

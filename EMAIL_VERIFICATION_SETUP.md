@@ -80,12 +80,42 @@ node server/migrations/add_email_verification.js
 - **Protected routes**: Users must verify email to generate/save/view posts
 - Graceful error messages when verification is required
 
+## Password Reset Flow
+
+### How It Works
+1. User clicks "Forgot Password" and enters email
+2. System generates reset token (1-hour expiration)
+3. Password reset email is sent via SendGrid
+4. User clicks link: `https://yourapp.com/reset-password?token=xyz`
+5. Frontend validates token and shows password reset form
+6. User enters new password, system validates and updates
+7. Reset token is cleared, user can login with new password
+
+### Security Features
+- Reset tokens expire after 1 hour
+- Tokens are single-use (cleared after successful reset)
+- Email doesn't reveal if account exists (security best practice)
+- New password must meet minimum requirements (6+ characters)
+
+### Database Migration
+Run the password reset migration to add required columns:
+
+```bash
+npm run migrate:password-reset
+```
+
+This adds:
+- `reset_token` (VARCHAR) - stores the reset token
+- `reset_token_expires` (TIMESTAMP) - token expiration time
+
 ## Database Schema
 
 New columns added to `users` table:
 - `email_verified` (BOOLEAN, default FALSE)
 - `verification_token` (VARCHAR)
 - `verification_token_expires` (TIMESTAMP)
+- `reset_token` (VARCHAR) - for password reset functionality
+- `reset_token_expires` (TIMESTAMP) - for password reset functionality
 
 ## API Endpoints
 
@@ -98,6 +128,14 @@ Verifies email with token.
 ### POST /api/auth/resend-verification
 Resends verification email.
 Body: `{ "email": "user@example.com" }`
+
+### POST /api/auth/request-password-reset
+Sends password reset email.
+Body: `{ "email": "user@example.com" }`
+
+### POST /api/auth/reset-password
+Resets password with token.
+Body: `{ "token": "reset-token", "password": "new-password" }`
 
 ## Troubleshooting
 
@@ -122,7 +160,6 @@ Body: `{ "email": "user@example.com" }`
 - Upgrade to paid plan for higher volume
 
 ## Future Enhancements
-- Password reset functionality (email.js already has the function)
 - Email templates with better branding
 - Rate limiting on resend verification
 - Admin panel to manually verify users

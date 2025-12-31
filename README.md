@@ -33,28 +33,41 @@ For production builds, the CSS is automatically built and minified.
 
 ## Features
 
-- **Authentication** - Secure signup/login with JWT tokens (currently in-memory, will use PostgreSQL in production)
-- **AI-Powered Posts** - Generate platform-optimized content using OpenAI
+- **Authentication** - Secure signup/login with JWT tokens and email verification
+- **AI-Powered Posts** - Generate platform-optimized content using Google Gemini 2.5 Flash
 - **Multi-Platform** - Support for Twitter/X, LinkedIn, Facebook, and Instagram
 - **Topic Methods** - Write your own, get AI suggestions, or use famous quotes
 - **ASCII Art** - Vintage terminal-style decorative art
 - **Export** - Copy text or download ASCII art
+- **Email Verification** - Required for post generation and saving features
+- **Password Reset** - Secure password reset via email
+- **Post Management** - Save, view, and delete generated posts
 
 ## Current Status
 
-✅ Full authentication flow with JWT
-✅ OpenAI integration for post generation
+✅ Full authentication flow with JWT and email verification
+✅ Google Gemini integration for post generation
 ✅ Platform-specific content optimization
-⚠️ User data stored in-memory (resets on server restart)
-🔜 PostgreSQL database integration coming next
+✅ PostgreSQL database with user management
+✅ Email verification and password reset
+✅ Post saving and management
 
 ## Deployment to Render
 
 1. Create PostgreSQL database on Render
 2. Create Web Service pointing to this repo
 3. Add environment variables in Render dashboard:
-   - `OPENAI_API_KEY`
+   - `GEMINI_API_KEY`
    - `JWT_SECRET`
+   - `SENDGRID_API_KEY`
+   - `FROM_EMAIL`
    - `DATABASE_URL` (auto-populated if using Render PostgreSQL)
 4. Add build command: `npm install && npm run build:css`
 5. Deploy!
+
+### Migrating Existing Data
+If you have an existing database to migrate:
+```bash
+npm run db:migrate-complete
+```
+This tool will backup your current database and restore it to the new Render PostgreSQL instance.

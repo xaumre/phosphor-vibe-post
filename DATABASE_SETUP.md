@@ -129,12 +129,55 @@ CREATE TABLE posts (
 );
 ```
 
+## Database Migration Tool
+
+### Complete Database Migration
+For migrating from one PostgreSQL instance to another (e.g., local to production, or between hosting providers):
+
+```bash
+npm run db:migrate-complete
+```
+
+This interactive tool will:
+1. **Backup** your current database to `backups/database-backup.sql`
+2. **Prompt** you to update your `.env` file with the new `DATABASE_URL`
+3. **Restore** the backup to the new database
+4. **Verify** the migration was successful
+
+### Programmatic Backup
+The application also includes an internal backup function (`generateBackup()` in `server/db.js`) that creates SQL backups programmatically. This is used by the migration tools and can be integrated into custom backup workflows.
+
+### Manual Migration Steps
+If you prefer to run each step individually:
+
+```bash
+# 1. Backup current database
+npm run db:backup
+
+# 2. Update DATABASE_URL in .env file
+
+# 3. Restore to new database
+npm run db:restore
+```
+
+### Prerequisites for Migration
+- PostgreSQL client tools installed (`pg_dump` and `psql`)
+  - **macOS**: `brew install postgresql`
+  - **Ubuntu**: `sudo apt-get install postgresql-client`
+- Network access to both source and destination databases
+
 ## Troubleshooting
 
 ### Connection Issues
 - Verify PostgreSQL is running: `pg_isready`
 - Check connection string format
 - Ensure database exists: `psql -l`
+
+### Migration Issues
+- Ensure PostgreSQL client tools are installed
+- Verify both source and destination database URLs are correct
+- Check network connectivity to both databases
+- Backup files are stored in `backups/` directory
 
 ### Permission Issues
 ```sql

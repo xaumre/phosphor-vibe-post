@@ -210,6 +210,103 @@ async function resendVerificationEmail(email) {
   };
 }
 
+// Request password reset
+async function requestPasswordReset(email) {
+  if (!email) {
+    throw new Error('Email is required');
+  }
+  
+  const result = await pool.query(
+    'SELECT id, email FROM users WHERE email = $1',
+    [email]
+  );
+  
+  if (result.rows.length === 0) {
+    // Don't reveal if user exists or not for security
+    return {
+      message: 'If an account with that email exists, a password reset link has been sent.'
+    };
+  }
+  
+  const user = result.rows[0];
+  
+  // Generate reset token
+  const resetToken = generateVerificationToken();
+  const tokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  
+  await pool.query(
+    `UPDATE users 
+     SET reset_token = $1, 
+         reset_token_expires = $2 
+     WHERE id = $3`,
+    [resetToken, tokenExpires, user.id]
+  );
+  
+  // Send password reset email
+  const { sendPasswordResetEmail } = require('./email');
+  try {
+    await sendPasswordResetEmail(email, resetToken);
+    console.log(`✅ Password reset email sent successfully to ${email}`);
+  } catch (emailError) {
+    console.error('❌ Failed to send password reset email:', emailError.message);
+    if (emailError.response) {
+      console.error('SendGrid error details:', emailError.response.body);
+    }
+    // Don't fail the request if email fails, but log it
+  }
+  
+  return {
+    message: 'If an account with that email exists, a password reset link has been sent.'
+  };
+}
+
+// Reset password with token
+async function resetPassword(token, newPassword) {
+  if (!token || !newPassword) {
+    throw new Error('Reset token and new password are required');
+  }
+  
+  if (newPassword.length < 6) {
+    throw new Error('Password must be at least 6 characters');
+  }
+  
+  const result = await pool.query(
+    `SELECT id, email, reset_token_expires 
+     FROM users 
+     WHERE reset_token = $1`,
+    [token]
+  );
+  
+  if (result.rows.length === 0) {
+    throw new Error('Invalid or expired reset token');
+  }
+  
+  const user = result.rows[0];
+  
+  // Check if token is expired
+  if (new Date() > new Date(user.reset_token_expires)) {
+    throw new Error('Reset token has expired');
+  }
+  
+  // Hash new password
+  const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  
+  // Update password and clear reset token
+  await pool.query(
+    `UPDATE users 
+     SET password = $1, 
+         reset_token = NULL, 
+         reset_token_expires = NULL 
+     WHERE id = $2`,
+    [hashedPassword, user.id]
+  );
+  
+  return {
+    message: 'Password reset successfully!',
+    email: user.email
+  };
+}
+
 // Middleware to verify authentication
 async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -269,6 +366,8 @@ module.exports = {
   login,
   verifyEmail,
   resendVerificationEmail,
+  requestPasswordReset,
+  resetPassword,
   authMiddleware,
   requireVerifiedEmail,
   verifyToken

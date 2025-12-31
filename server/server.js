@@ -14,7 +14,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Import modules
 const generator = require('./generator');
 const auth = require('./auth');
-const { initDatabase } = require('./db');
+const { initDatabase, generateBackup } = require('./db');
 
 // Health check for Render
 app.get('/health', (req, res) => {
@@ -73,6 +73,67 @@ app.post('/api/auth/resend-verification', async (req, res) => {
     res.json(result);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+// Request password reset
+app.post('/api/auth/request-password-reset', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const result = await auth.requestPasswordReset(email);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Reset password with token
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    const result = await auth.resetPassword(token, password);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Admin backup endpoint
+app.get('/api/admin/backup', async (req, res) => {
+  try {
+    // Simple token-based authentication
+    const token = req.query.token || req.headers['x-backup-token'];
+    const expectedToken = process.env.ADMIN_BACKUP_TOKEN || 'backup-token-change-me';
+    
+    if (!token || token !== expectedToken) {
+      return res.status(401).json({ error: 'Invalid backup token' });
+    }
+    
+    console.log('🔄 Admin backup requested');
+    
+    // Generate backup
+    const backup = await generateBackup();
+    
+    // Set headers for file download
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `phosphor-vibe-backup-${timestamp}.sql`;
+    
+    res.setHeader('Content-Type', 'application/sql');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', Buffer.byteLength(backup.sql, 'utf8'));
+    
+    // Add backup stats as headers
+    res.setHeader('X-Backup-Users', backup.stats.users);
+    res.setHeader('X-Backup-Posts', backup.stats.posts);
+    res.setHeader('X-Backup-Size', backup.stats.size);
+    
+    console.log(`✅ Backup download started: ${backup.stats.users} users, ${backup.stats.posts} posts`);
+    
+    res.send(backup.sql);
+    
+  } catch (error) {
+    console.error('❌ Backup endpoint error:', error);
+    res.status(500).json({ error: 'Backup generation failed' });
   }
 });
 

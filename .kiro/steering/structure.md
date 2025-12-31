@@ -6,13 +6,14 @@
 /
 ├── server/              # Backend Node.js application
 │   ├── server.js        # Main Express server and route definitions
-│   ├── auth.js          # Authentication logic (signup, login, JWT, email verification)
+│   ├── auth.js          # Authentication logic (signup, login, JWT, email verification, password reset)
 │   ├── db.js            # Database connection and initialization
-│   ├── email.js         # SendGrid email sending functions
+│   ├── email.js         # SendGrid email sending functions (verification & password reset)
 │   ├── generator.js     # AI content generation (posts, topics, quotes, ASCII art)
 │   ├── migrate.js       # Main database migration runner
 │   └── migrations/      # Database migration scripts
-│       └── add_email_verification.js
+│       ├── add_email_verification.js
+│       └── add_password_reset.js
 │
 ├── public/              # Frontend static files
 │   ├── index.html       # Single-page application HTML
@@ -59,8 +60,8 @@
 ## File Responsibilities
 
 - `server.js`: Route definitions, middleware setup, server initialization
-- `auth.js`: All authentication logic including verification tokens
+- `auth.js`: All authentication logic including verification tokens and password reset
 - `generator.js`: All AI/LLM interactions and fallback logic
 - `db.js`: Database connection, pool management, schema initialization
-- `email.js`: SendGrid integration for verification emails
+- `email.js`: SendGrid integration for verification and password reset emails
 - `app.js`: Client-side routing, API calls, UI state management
